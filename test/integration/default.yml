@@ -1,0 +1,42 @@
+---
+  - name: wrapper playbook for kitchen testing nmische.logrotate
+    hosts: localhost
+    roles:
+    - {  role: nmische.logrotate,
+         daily_scripts: [
+           {
+              name: tomcat,
+              path: /var/log/tomcat/catalina.out,
+              options: [
+                rotate 3,
+                size 100M,
+                missingok,
+                notifempty,
+                delaycompress,
+                compress,
+                copytruncate
+              ]
+           }
+         ],
+         hourly_scripts: [
+           {
+             name: nginx,
+             path: /var/log/nginx/*.log,
+             options: [
+               weekly,
+               size 25M,
+               rotate 7,
+               missingok,
+               compress,
+               delaycompress,
+               copytruncate
+             ],
+             scripts: {
+               postrotate: [
+                 "[ -s /run/nginx.pid ] && kill -USR1 `cat /run/nginx.pid`"
+               ]
+             }
+           }
+         ]
+      }
+

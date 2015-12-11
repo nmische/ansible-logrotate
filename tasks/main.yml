@@ -1,0 +1,49 @@
+---
+- name: Install logrotate via apt
+  apt: 
+    name: logrotate
+    state: present
+  when: ansible_os_family == 'Debian'
+
+- name: Install logrotate via yum
+  yum: 
+    name: logrotate
+    state: present
+  when: ansible_os_family == 'RedHat'
+
+- name: Setup directory for hourly configs
+  file: 
+    path: /etc/logrotate.hourly.d
+    owner: root
+    group: root
+    state: directory
+
+- name: Setup logrotate.hourly.conf
+  copy:
+    src: logrotate_hourly_conf_{{ansible_os_family}}
+    dest: /etc/logrotate.hourly.conf 
+    owner: root 
+    group: root 
+    mode: "0644"
+
+- name: Setup logrotate to run hourly
+  copy:
+    src: logrotate_cron_{{ansible_os_family}}
+    dest: /etc/cron.hourly/logrotate
+    owner: root 
+    group: root 
+    mode: "0755"
+
+- name: Setup logrotate.d scripts
+  template:
+    src: logrotate.j2
+    dest: /etc/logrotate.d/{{ item.name }}
+  with_items: daily_scripts
+  when: daily_scripts is defined
+
+- name: Setup logrotate.hourly.d scripts
+  template:
+    src: logrotate.j2
+    dest: /etc/logrotate.hourly.d/{{ item.name }}
+  with_items: hourly_scripts
+  when: hourly_scripts is defined
